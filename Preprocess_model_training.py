@@ -7,8 +7,8 @@ from stable_baselines3 import PPO
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.vec_env import DummyVecEnv
 
-from src.env.sorting_env import NetEnv
-from src.network.Old_net import generate_flows, Network
+from Preprocess_environment import NetEnv
+from src.network.net import generate_flows, Network
 
 # ================================================
 # CONFIGURATION

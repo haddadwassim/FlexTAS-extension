@@ -17,7 +17,7 @@ from typing import Union, List, Optional, Dict, Any, Tuple
 from definitions import ROOT_DIR, OUT_DIR, LOG_DIR
 from src.lib.graph import neighbors_within_distance
 from src.lib.operation import Operation, check_operation_isolation
-from src.network.Old_net import Flow, Link, Net, PERIOD_SET, generate_cev, generate_flows, Network, _generate_graph, RandomGraph
+from src.network.net import Flow, Link, Net, PERIOD_SET, generate_cev, generate_flows, Network, _generate_graph, RandomGraph
 
 MAX_NEIGHBORS = 20
 MAX_REMAIN_HOPS = 10

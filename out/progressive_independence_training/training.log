@@ -1,0 +1,12 @@
+2026-01-14 12:56:12,157 - ProgressiveTraining - INFO - Loaded graph: graphs/ERG.graphml with 20 nodes, 96 edges
+2026-01-14 12:56:12,160 - ProgressiveIndependence_30320 - INFO -  Starting Progressive Independence Training
+2026-01-14 12:56:12,160 - ProgressiveIndependence_30320 - INFO - Flow counts: [10, 30, 50, 100, 150]
+2026-01-14 12:56:12,160 - ProgressiveIndependence_30320 - INFO - Initial flows: 10
+2026-01-14 12:56:12,160 - ProgressiveIndependence_30320 - INFO - Phase 0 (Bootstrap): Rule strength = 0.5
+2026-01-14 12:56:12,668 - ProgressiveTraining - INFO -  Starting Progressive Independence Training
+2026-01-14 12:56:12,668 - ProgressiveTraining - INFO - Total timesteps: 500,000
+2026-01-14 12:56:12,668 - ProgressiveTraining - INFO - Flow progression: [10, 30, 50, 100, 150]
+2026-01-14 12:56:13,067 - ProgressiveIndependence_30320 - INFO - Phase 0 (Bootstrap) - Episode 10/50 | Success rate: 1.000 | Flows: 10 | Rule strength: 0.500
+2026-01-14 12:56:13,350 - ProgressiveIndependence_30320 - INFO - Phase 0 (Bootstrap) - Episode 20/50 | Success rate: 1.000 | Flows: 10 | Rule strength: 0.500
+2026-01-14 12:56:13,353 - src.env.env.30320 - INFO -  Advanced to 30 flows (level 1)
+2026-01-14 12:56:13,501 - src.env.env.30320 - INFO - end of episode, reason: [ErrorType.GatingExceed: gating constraint unsatisfied.]	Scheduled flows: 26

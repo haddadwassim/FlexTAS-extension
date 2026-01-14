@@ -14,8 +14,8 @@ import math
 
 
 sys.path.append(os.path.join(os.getcwd(), "src"))
-from src.network.Old_net import Network, FlowGenerator, PERIOD_SET
-from src.env.Old_env import NetEnv  
+from src.network.net import Network, FlowGenerator, PERIOD_SET
+from src.env.env import NetEnv  
 
 from stable_baselines3 import PPO
 from stable_baselines3.common.vec_env import DummyVecEnv
