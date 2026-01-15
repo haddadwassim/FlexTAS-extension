@@ -1,0 +1,11 @@
+{
+  "network": {
+    "nodes": {
+      "sw1": { "ports": { "px": { "capacity_bps": 1000000000 }, "py": { "capacity_bps": 1000000000 } } },
+      "sw2": { "ports": { "px": { "capacity_bps": 1000000000 }, "py": { "capacity_bps": 1000000000 } } }
+    }
+  },
+  "flows": {},
+  "schedule": {},
+  "time": { "current_time_us": 0 }
+}

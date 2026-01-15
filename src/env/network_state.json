@@ -3,26 +3,56 @@
     "nodes": {
       "sw1": {
         "ports": {
-          "px": { "capacity_bps": 1000000000 }
+          "p1": { "capacity_bps": 1000000000 },
+          "p2": { "capacity_bps": 1000000000 }
+        }
+      },
+      "sw2": {
+        "ports": {
+          "p1": { "capacity_bps": 1000000000 }
         }
       }
     }
   },
+
   "flows": {
     "f1": {
       "qos": { "max_delay_us": 1000 }
+    },
+    "f2": {
+      "qos": { "max_delay_us": 1500 }
     }
   },
+
   "schedule": {
-    "swx": {
-      "px": [
+    "sw1": {
+      "p1": [
         {
           "flow_id": "f1",
-          "time": { "start_us": 0, "end_us": 500 }
+          "time": { "start_us": 0, "end_us": 400 }
+        },
+        {
+          "flow_id": "f2",
+          "time": { "start_us": 500, "end_us": 900 }
+        }
+      ],
+      "p2": [
+        {
+          "flow_id": "f45",
+          "time": { "start_us": 100, "end_us": 300 }
+        }
+      ]
+    },
+    "sw2": {
+      "p1": [
+        {
+          "flow_id": "f1",
+          "time": { "start_us": 200, "end_us": 600 }
         }
       ]
     }
   },
+
   "time": {
     "current_time_us": 0
   }
