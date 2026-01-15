@@ -1,0 +1,29 @@
+{
+  "network": {
+    "nodes": {
+      "sw1": {
+        "ports": {
+          "px": { "capacity_bps": 1000000000 }
+        }
+      }
+    }
+  },
+  "flows": {
+    "f1": {
+      "qos": { "max_delay_us": 1000 }
+    }
+  },
+  "schedule": {
+    "swx": {
+      "px": [
+        {
+          "flow_id": "f1",
+          "time": { "start_us": 0, "end_us": 500 }
+        }
+      ]
+    }
+  },
+  "time": {
+    "current_time_us": 0
+  }
+}
