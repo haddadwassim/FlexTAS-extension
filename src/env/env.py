@@ -10,27 +10,15 @@ import numpy as np
 import os
 import pandas as pd
 import random
-from typing import SupportsFloat, Any, Optional, List, Dict
+from typing import SupportsFloat, Any, Optional
 
 from definitions import ROOT_DIR, OUT_DIR, LOG_DIR
 from src.lib.graph import neighbors_within_distance
 from src.lib.operation import Operation, check_operation_isolation
 from src.network.net import Flow, Link, Net, PERIOD_SET, generate_cev, generate_flows, Network
-from network_state import NetworkState
 
 MAX_NEIGHBORS = 20
 MAX_REMAIN_HOPS = 10
-
-
-@dataclass
-class Flow:
-    flow_id: str
-    path: List[Dict[str, str]]  # [{"node": ..., "port": ...}]
-    payload: int                # bytes
-    period: int                 # max injection period (us)
-    jitter: int                 # allowed jitter (us)
-    e2e_delay: int              # max end-to-end delay (us)
-    qos: Dict[str, int] = None  # optional QoS dict
 
 
 class ErrorType(Enum):
@@ -239,6 +227,7 @@ class _StateEncoder:
             "remain_hops": remain_hops_feature
         }
 
+
 class NetEnv(gym.Env):
     alpha: float = 1
     beta: float = 10
@@ -249,117 +238,307 @@ class NetEnv(gym.Env):
         gcl_cycle: int = 1
         gcl_length: int = 0
 
-    def __init__(self, network=None):
+    def __init__(self, network: Network = None):
         super().__init__()
 
-        # -------------------------------
-        # Existing network setup
-        # -------------------------------
         if network is None:
-            graph = generate_cev()  # Your FlexTAS function
+            graph = generate_cev()
             network = Network(graph, generate_flows(graph, 10))
 
         self.graph = network.graph
         self.flows = network.flows
         self.line_graph, self.link_dict = network.line_graph, network.links_dict
 
+        assert self.graph is not None and self.flows is not None, "fail to init env, invalid graph or flows"
+
         self.num_flows: int = len(self.flows)
-        self.links_operations: dict = defaultdict(list)
-        self.temp_operations: list = []
-        self.links_gcl: dict = defaultdict(self._default_gcl_info)
+
+        self.links_operations: dict[Link, list[tuple[Flow, Operation]]] = defaultdict(list)
+
+        self.temp_operations: list[tuple[Link, Operation]] = []
+
+        self.links_gcl: dict[Link, NetEnv.GclInfo] = defaultdict(self._default_gcl_info)
+
         self.flow_index: int = 0
+
         self.last_action = None
+
         self.reward: float = 0
 
-        # -------------------------------
-        # Commenting out state encoder for baseline
-        # -------------------------------
-        # self.state_encoder: _StateEncoder = _StateEncoder(self)
-        # self.observation_space: spaces.Dict = self.state_encoder.observation_space
-        # self.action_space = spaces.Discrete(2)
+        self.state_encoder: _StateEncoder = _StateEncoder(self)
 
-        self.logger = logging.getLogger(f"{__name__}.{os.getpid()}")
-        self.logger.setLevel(logging.INFO)
+        self.observation_space: spaces.Dict = self.state_encoder.observation_space
+
+        # action space: enable gating or not for current operation
+        self.action_space = spaces.Discrete(2)
+
+        logger = logging.getLogger(f"{__name__}.{os.getpid()}")
+        logger.setLevel(logging.INFO)
+        self.logger = logger
 
     def _default_gcl_info(self):
+        # This method will replace the lambda function
         return self.GclInfo()
 
-    # -------------------------------
-    # Commenting out old reset / step / render for baseline
-    # -------------------------------
-    # def reset(...): ...
-    # def _generate_state(...): ...
-    # def current_flow(...): ...
-    # def current_link(...): ...
-    # def action_masks(...): ...
-    # def _check_temp_operations(...): ...
-    # def _check_valid_link(...): ...
-    # def step(...): ...
-    # def render(...): ...
-    # def close(...): ...
-    # def add_gating(...): ...
+    def reset(
+            self,
+            *,
+            seed: int | None = None,
+            options: dict[str, Any] | None = None,
+    ) -> tuple[ObsType, dict[str, Any]]:
 
-    # -------------------------------
-    # New function: add_flow
-    # -------------------------------
-    def add_flow(self, flow: Flow, network_state: NetworkState) -> bool:
+        super().reset(seed=seed)
+
+        # shuffle the flows, thus
+        #  a) to avoid local minimum,
+        #  b) for generalization
+        #  c) for robustness
+        #  d) for learning efficiency,
+        #  etc.
+        random.shuffle(self.flows)
+        self.links_operations.clear()
+
+        self.temp_operations.clear()
+        self.links_gcl.clear()
+
+        self.flow_index = 0
+
+        self.reward = 0
+
+        return self._generate_state(), {}
+
+    def _generate_state(self) -> ObsType:
+        return self.state_encoder.state()
+
+    def current_flow(self) -> Flow:
+        return self.flows[self.flow_index]
+
+    def current_link(self) -> Link:
+        hop_index = len(self.temp_operations)
+        flow = self.current_flow()
+        link = self.link_dict[flow.path[hop_index]]
+        return link
+
+    def action_masks(self) -> np.ndarray:
+        flow = self.current_flow()
+        link = self.current_link()
+
+        jitter_exceed = False
+        if len(self.temp_operations) + 1 == len(flow.path) and len(self.temp_operations) != 0:
+            # check accumulated jitter
+            operation = self.temp_operations[-1][1]
+            accum_jitter = operation.latest_time - operation.start_time \
+                if operation.gating_time is None else 0
+
+            if accum_jitter > flow.jitter:
+                jitter_exceed = True
+
+        can_gating = self.add_gating(link, flow.period, attempt=True)
+        return np.array([not jitter_exceed, can_gating])
+
+    def _check_temp_operations(self) -> Optional[int]:
         """
-        Schedule a single flow using existing FlexTAS logic
-        and update the NetworkState.
+        :return: None if valid, else return the conflict operation
         """
-        self.flows.append(flow)
-        self.flow_index = len(self.flows) - 1
-        self.temp_operations = []
+        for link, operation in self.temp_operations:
+            offset = self._check_valid_link(link, operation)
+            if isinstance(offset, int):
+                return offset
+        return None
+
+    def _check_valid_link(self, link: Link, operation: Operation) -> Optional[int]:
+        # only needs to check whether the newly added operation is conflict with other operations.
+        flow = self.current_flow()
+        for flow_rhs, operation_rhs in self.links_operations[link]:
+            offset = check_operation_isolation(
+                (operation, flow.period),
+                (operation_rhs, flow_rhs.period)
+            )
+            if offset is not None:
+                return offset
+        return None
+
+    def step(
+            self, action: ActType
+    ) -> tuple[ObsType, SupportsFloat, bool, bool, dict[str, Any]]:
+        """
+
+        :param action:
+        :return:
+        tuple: A tuple containing the following elements:
+            - observation (object): The new state of the environment after the action.
+            - reward (float): The reward for the action.
+            - done (bool): A flag indicating whether the game has ended. True means the game has ended.
+            - truncated (bool): always False.
+            - info (dict): A dictionary with extra diagnostic information.
+                'success' key indicates whether the game has been successfully completed.
+                True means success, False means failure.
+                'msg' key contains information for debug
+        """
+        gating = (action == 1)
+
+        flow = self.current_flow()
+
+        try:
+            hop_index = len(self.temp_operations)
+
+            link = self.link_dict[flow.path[hop_index]]
+
+            trans_time = link.transmission_time(flow.payload)
+
+            # compute enqueue_time min and max
+            if hop_index == 0:
+                earliest_enqueue_time = 0
+                latest_enqueue_time = 0
+            else:
+                last_link, last_operation = self.temp_operations[-1]
+
+                is_gating_last_link = self.last_action
+                if is_gating_last_link:
+                    earliest_dequeue_time = last_operation.gating_time
+                    latest_dequeue_time = last_operation.gating_time
+                else:
+                    earliest_dequeue_time = last_operation.earliest_time
+                    latest_dequeue_time = last_operation.latest_time
+
+                earliest_enqueue_time = (earliest_dequeue_time
+                                         + trans_time
+                                         + Net.DELAY_PROP
+                                         - Net.SYNC_PRECISION
+                                         + Net.DELAY_PROC_MIN)
+
+                latest_enqueue_time = (latest_dequeue_time
+                                       + trans_time
+                                       + Net.DELAY_PROP
+                                       + Net.SYNC_PRECISION
+                                       + Net.DELAY_PROC_MAX)
+
+            # construct operation
+            if gating:
+                wait_time = 0  # no-wait
+            else:
+                wait_time = link.interference_time()  # might wait
+            latest_dequeue_time = latest_enqueue_time + wait_time
+
+            if hop_index == len(flow.path) - 1:
+                # reach the dst, check jitter constraint.
+                if not gating:
+                    # don't need to check if gating, since gating reset the jitter.
+                    accumulated_jitter = latest_enqueue_time - earliest_enqueue_time
+                    if accumulated_jitter > flow.jitter:
+                        raise SchedulingError(ErrorType.JitterExceed,
+                                              f"jitter constraint unsatisfied. {accumulated_jitter} > {flow.jitter}")
+
+            end_time = latest_dequeue_time + trans_time
+
+            if end_time > flow.period:
+                raise SchedulingError(ErrorType.PeriodExceed,
+                                      "injection time is too late")
+
+            operation = Operation(
+                earliest_enqueue_time,
+                None,
+                latest_dequeue_time,
+                end_time
+            )
+            if gating:
+                operation.gating_time = latest_dequeue_time  # always enable gating right after the latest enqueue time.
+
+            self.temp_operations.append((link, operation))
+
+            while True:
+                offset = self._check_temp_operations()
+                if offset is None:
+                    # find a valid solution that satisfies timing constraint
+                    break
+
+                assert isinstance(offset, int)
+
+                for link, operation in self.temp_operations:
+                    operation.add(offset)
+                    if operation.end_time > flow.period:
+                        # cannot be scheduled
+                        raise SchedulingError(ErrorType.PeriodExceed, "timing isolation constraint unsatisfied.")
+
+            gcl_added = 0
+            if gating:
+                # check gating constraint
+                try:
+                    old_gcl = self.links_gcl[link].gcl_length
+                    self.add_gating(link, flow.period)
+                    new_gcl = self.links_gcl[link].gcl_length
+                    gcl_added = new_gcl - old_gcl
+                except RuntimeError:
+                    raise SchedulingError(ErrorType.GatingExceed,
+                                          "gating constraint unsatisfied.")
+
+            # self.reward += 0.1
+            reward_gcl = 0 - self.alpha * gcl_added / link.gcl_capacity if link.gcl_capacity != 0 else 0
+            reward_time = 0 - self.beta * wait_time / flow.e2e_delay
+            self.reward = 1 + reward_gcl + reward_time
+
+        except SchedulingError as e:
+            self.logger.info(f"end of episode, reason: [{e.error_type}: {e.msg}]\tScheduled flows: {self.flow_index}")
+            if e.error_type == ErrorType.JitterExceed:
+                # self.reward -= 100
+                done = True
+            elif e.error_type == ErrorType.GatingExceed:
+                # self.reward -= 100
+                done = True
+            elif e.error_type == ErrorType.PeriodExceed:
+                # self.reward -= 100
+                done = True
+            else:
+                assert False, "Unknown error type."
+            return self.observation_space.sample(), self.reward, done, False, {'success': False, 'msg': e.__str__()}
 
         done = False
-        while not done:
-            # Use gating=1 as default for baseline
-            obs, reward, done, truncated, info = self.step(action=1)
-            if info.get("success") is False:
-                print(f"Flow {flow.flow_id} could not be scheduled: {info.get('msg')}")
+        # successfully scheduling a flow
+        if len(flow.path) == hop_index + 1:
+            # reach the dst, all temp operations are confirmed.
+            for link, operation in self.temp_operations:
+                self.links_operations[link].append((flow, operation))
+            self.temp_operations = []
+
+            self.flow_index += 1
+
+            if self.flow_index % math.ceil(self.num_flows * 0.1) == 0:
+                # give an extra reward when the agent schedule another set of flows.
+                self.reward += self.gamma * ((self.flow_index / self.num_flows) ** 2)
+
+            if self.flow_index == len(self.flows):
+                return (self.observation_space.sample(), self.reward, True, False,
+                        {'success': True, 'ScheduleRes': self.links_operations.copy()})
+
+        self.last_action = gating
+
+        self.render()
+        return self._generate_state(), self.reward, done, False, {'success': done}
+
+    def render(self) -> RenderFrame | list[RenderFrame] | None:
+        gating = self.last_action
+        self.logger.debug(f"Action: {gating}, Reward: {self.reward}")
+        return
+
+    def close(self):
+        return
+
+    def add_gating(self, link: Link, period: int, attempt: bool = False):
+        gcl_info = self.links_gcl[link]
+        gcl_cycle = gcl_info.gcl_cycle
+        gcl_length = gcl_info.gcl_length
+        new_cycle = math.lcm(gcl_cycle, period)
+        new_length = gcl_length * (new_cycle // gcl_cycle)
+        new_length += ((new_cycle // period) * 2)
+        if new_length > link.gcl_capacity:
+            if attempt:
                 return False
-
-        # Map scheduled operations to NetworkState
-        for hop_index, hop in enumerate(flow.path):
-            node = hop["node"]
-            port = hop["port"]
-            if node not in network_state.schedule:
-                network_state.schedule[node] = {}
-            if port not in network_state.schedule[node]:
-                network_state.schedule[node][port] = []
-
-            # Find operation scheduled on this hop
-            link = self.link_dict[(node, port)]
-            ops = [op for f, op in self.links_operations[link] if f.flow_id == flow.flow_id]
-            if not ops:
-                continue
-            op = ops[0]
-
-            network_state.schedule[node][port].append({
-                "flow_id": flow.flow_id,
-                "time": {
-                    "start_us": op.earliest_enqueue_time,
-                    "end_us": op.end_time
-                }
-            })
-
-        print(f"Flow {flow.flow_id} scheduled successfully.")
+            else:
+                raise RuntimeError("Gating constraint is not satisfied.")
+        elif not attempt:
+            gcl_info.gcl_cycle = new_cycle
+            gcl_info.gcl_length = new_length
         return True
-
-    # -------------------------------
-    # New function: schedule_flows
-    # -------------------------------
-    def schedule_flows(self, flows: List[Flow], network_state: NetworkState):
-        """
-        Schedule a list of flows sequentially.
-        """
-        for flow in flows:
-            success = self.add_flow(flow, network_state)
-            if not success:
-                print(f"Failed to schedule flow {flow.flow_id}")
-
-
-
 
 
 class TrainingNetEnv(NetEnv):

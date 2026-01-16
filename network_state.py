@@ -15,10 +15,14 @@ class NetworkState:
 
     def __init__(self, state: Dict[str, Any]):
         self.network = state.get("network", {})
+        self.nodes = self.network.get("nodes", {})
+        self.links = self.network.get("links", [])
+
         self.flows = state.get("flows", {})
         self.schedule = state.get("schedule", {})
         self.time = state.get("time", {})
 
+        self._build_ports_from_links()
         self._validate_basic_structure()
         self.validate_references()
 
@@ -95,6 +99,9 @@ class NetworkState:
         if "nodes" not in self.network:
             raise ValueError("NetworkState: 'network.nodes' missing")
 
+        if "links" not in self.network:
+            raise ValueError("NetworkState: 'network.links' missing")
+
         if not isinstance(self.flows, dict):
             raise ValueError("NetworkState: 'flows' must be a dict")
 
@@ -131,3 +138,20 @@ class NetworkState:
                             f"Invalid time window for flow '{flow_id}' on {node}:{port}"
                         )
 
+
+
+    def _build_ports_from_links(self):
+        """
+        Builds implicit ports from links.
+        Each link creates a bidirectional port.
+        """
+        for node in self.nodes.values():
+            node.setdefault("ports", {})
+
+        for link in self.links:
+            src = link["src"]
+            dst = link["dst"]
+            cap = link.get("capacity_bps")
+
+            self.nodes[src]["ports"][dst] = {"capacity_bps": cap}
+            self.nodes[dst]["ports"][src] = {"capacity_bps": cap}

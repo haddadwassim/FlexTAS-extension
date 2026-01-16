@@ -1,47 +1,55 @@
-from env import NetEnv, Flow
+from env import NetEnv
 from network_state import NetworkState
+from src.network.net import Network, generate_cev, generate_flows
+from src.app.drl_scheduler import DrlScheduler
+
 
 def main():
-    # Load empty network state
+    # -----------------------
+    # Build network
+    # -----------------------
+    graph = generate_cev()
+    flows = generate_flows(graph, 2)
+    network = Network(graph, flows)
+
+    # -----------------------
+    # Create scheduler (spawns subprocesses)
+    # -----------------------
+    scheduler = DrlScheduler(network)
+    scheduler.load_model("best_model", "MaskablePPO")
+
+    # -----------------------
+    # Create env for inference
+    # -----------------------
+    env = NetEnv(network)
+    #env.attach_agent(scheduler.model)
+
+    # -----------------------
+    # Network state
+    # -----------------------
     network_state = NetworkState.from_json("network_state.json")
 
-    # Create environment
-    env = NetEnv()
+    # -----------------------
+    # Schedule
+    # -----------------------
+    env.add_flows(flows, network_state)
 
-    # Define flows
-    flow1 = Flow(
-        flow_id="f1",
-        path=[{"node": "sw1", "port": "px"}, {"node": "sw2", "port": "py"}],
-        payload=100,
-        period=1000,
-        jitter=50,
-        e2e_delay=1000
-    )
+    # Schedule all flows dynamically
+    while env.flow_index < len(env.flows):
+        done = False
+        while not done:
+            state = env._generate_state()
+            action = scheduler.model.predict(state)[0]
+            obs, reward, done, truncated, info = env.step(action)
 
-    flow2 = Flow(
-        flow_id="f2",
-        path=[{"node": "sw1", "port": "py"}, {"node": "sw2", "port": "px"}],
-        payload=200,
-        period=800,
-        jitter=30,
-        e2e_delay=900
-    )
+    # Update network_state after scheduling
+    env.update_network_state(network_state)
+    network_state.to_json("network_state.json")
 
-    flow3 = Flow(
-        flow_id="f3",
-        path=[{"node": "sw1", "port": "px"}],
-        payload=150,
-        period=1200,
-        jitter=20,
-        e2e_delay=1100
-    )
-
-    # Schedule flows
-    env.schedule_flows([flow1, flow2, flow3], network_state)
-
-    # Print results
-    print("\n=== Final Network Schedule ===")
     network_state.pretty_print()
+
+
+
 
 if __name__ == "__main__":
     main()

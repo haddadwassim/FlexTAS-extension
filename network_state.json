@@ -1,11 +1,64 @@
 {
   "network": {
-    "nodes": {
-      "sw1": { "ports": { "px": { "capacity_bps": 1000000000 }, "py": { "capacity_bps": 1000000000 } } },
-      "sw2": { "ports": { "px": { "capacity_bps": 1000000000 }, "py": { "capacity_bps": 1000000000 } } }
-    }
+    "nodes": {}
   },
   "flows": {},
-  "schedule": {},
-  "time": { "current_time_us": 0 }
+  "schedule": {
+    "F0": {
+      "('CM2CB', 'SW42')": [
+        {
+          "start_us": 0,
+          "end_us": 215,
+          "gating_time": null
+        }
+      ],
+      "('SW42', 'SW52')": [
+        {
+          "start_us": 93,
+          "end_us": 437,
+          "gating_time": null
+        }
+      ],
+      "('SW52', 'SM2CA')": [
+        {
+          "start_us": 186,
+          "end_us": 659,
+          "gating_time": null
+        }
+      ]
+    },
+    "F1": {
+      "('MIMU3', 'SW13')": [
+        {
+          "start_us": 0,
+          "end_us": 154,
+          "gating_time": null
+        }
+      ],
+      "('SW13', 'SW21')": [
+        {
+          "start_us": 32,
+          "end_us": 315,
+          "gating_time": null
+        }
+      ],
+      "('SW21', 'SW14')": [
+        {
+          "start_us": 64,
+          "end_us": 352,
+          "gating_time": 322
+        }
+      ],
+      "('SW14', 'DU5')": [
+        {
+          "start_us": 354,
+          "end_us": 513,
+          "gating_time": null
+        }
+      ]
+    }
+  },
+  "time": {
+    "current_time_us": 0
+  }
 }
