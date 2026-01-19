@@ -571,6 +571,57 @@ class NetEnv(gym.Env):
             self.num_flows = len(self.flows)
 
             print(f"Flow {new_flow.flow_id} added: {new_flow.src_id} -> {new_flow.dst_id}, path: {new_flow.path}")
+    
+    def remove_flow(self, flow_id: str):
+        """
+        Remove a flow and all its scheduled operations.
+        """
+        flow_indices = {f.flow_id: i for i, f in enumerate(self.flows)}
+        if flow_id not in flow_indices:
+            raise ValueError(f"Flow {flow_id} not found")
+
+        remove_idx = flow_indices[flow_id]
+
+        if remove_idx < self.flow_index:
+            raise RuntimeError(
+                f"Cannot remove already committed flow {flow_id} "
+                f"(index {remove_idx} < flow_index {self.flow_index})"
+            )
+
+        flow = self.flows[remove_idx]
+        print(f"Removing flow {flow.flow_id}")
+
+        for link_key, ops in self.links_operations.items():
+            new_ops = []
+            removed_count = 0
+
+            for op in ops:
+                scheduled_flow = op[0] if isinstance(op, tuple) else op.get("flow")
+                if scheduled_flow.flow_id == flow.flow_id:
+                    removed_count += 1
+                else:
+                    new_ops.append(op)
+
+            if removed_count > 0:
+                self.links_operations[link_key] = new_ops
+                self.links_gcl[link_key]["gcl_length"] = max(
+                    0,
+                    self.links_gcl[link_key]["gcl_length"] - removed_count
+                )
+
+        self.temp_operations = [
+            op for op in self.temp_operations
+            if op[0].flow_id != flow.flow_id
+        ]
+
+        self.flows.pop(remove_idx)
+        self.num_flows = len(self.flows)
+
+        if remove_idx < self.flow_index:
+            self.flow_index -= 1
+
+        print(f"Flow {flow_id} removed successfully")
+
 
 
 

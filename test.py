@@ -2,5 +2,7 @@ from dynamic_reconfiguration_environment import NetEnv
 
 env=NetEnv()
 
-print(env.flows[0].flow_id)
-env.save_schedule_state("schedule_state.json")
+env.reconfigure()
+print(len(env.flows))
+env.remove_flow("F10")
+print(len(env.flows))
