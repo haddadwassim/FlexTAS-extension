@@ -1,64 +1,471 @@
 {
-  "network": {
-    "nodes": {}
-  },
-  "flows": {},
-  "schedule": {
-    "F0": {
-      "('CM2CB', 'SW42')": [
+    "flow_index": 0,
+    "num_flows": 12,
+    "flows": [
         {
-          "start_us": 0,
-          "end_us": 215,
-          "gating_time": null
-        }
-      ],
-      "('SW42', 'SW52')": [
+            "flow_id": "F0",
+            "src": "RCM2",
+            "dst": "SM2CB",
+            "path": [
+                [
+                    "RCM2",
+                    "SW32"
+                ],
+                [
+                    "SW32",
+                    "SW42"
+                ],
+                [
+                    "SW42",
+                    "SW52"
+                ],
+                [
+                    "SW52",
+                    "SM2CB"
+                ]
+            ],
+            "period": 4000,
+            "payload": 1440,
+            "e2e_delay": 4000,
+            "jitter": 400
+        },
         {
-          "start_us": 93,
-          "end_us": 437,
-          "gating_time": null
-        }
-      ],
-      "('SW52', 'SM2CA')": [
+            "flow_id": "F1",
+            "src": "DU1",
+            "dst": "DU4",
+            "path": [
+                [
+                    "DU1",
+                    "SW11"
+                ],
+                [
+                    "SW11",
+                    "SW21"
+                ],
+                [
+                    "SW21",
+                    "SW14"
+                ],
+                [
+                    "SW14",
+                    "DU4"
+                ]
+            ],
+            "period": 16000,
+            "payload": 68,
+            "e2e_delay": 16000,
+            "jitter": 1600
+        },
         {
-          "start_us": 186,
-          "end_us": 659,
-          "gating_time": null
+            "flow_id": "F2",
+            "src": "DU3",
+            "dst": "FCM1",
+            "path": [
+                [
+                    "DU3",
+                    "SW11"
+                ],
+                [
+                    "SW11",
+                    "SW21"
+                ],
+                [
+                    "SW21",
+                    "SW31"
+                ],
+                [
+                    "SW31",
+                    "FCM1"
+                ]
+            ],
+            "period": 2000,
+            "payload": 1451,
+            "e2e_delay": 2000,
+            "jitter": 200
+        },
+        {
+            "flow_id": "F3",
+            "src": "SMRIU2",
+            "dst": "FCM2",
+            "path": [
+                [
+                    "SMRIU2",
+                    "SW6"
+                ],
+                [
+                    "SW6",
+                    "SW32"
+                ],
+                [
+                    "SW32",
+                    "FCM2"
+                ]
+            ],
+            "period": 2000,
+            "payload": 619,
+            "e2e_delay": 2000,
+            "jitter": 200
+        },
+        {
+            "flow_id": "F4",
+            "src": "SMRIU2",
+            "dst": "CM2CB",
+            "path": [
+                [
+                    "SMRIU2",
+                    "SW6"
+                ],
+                [
+                    "SW6",
+                    "SW32"
+                ],
+                [
+                    "SW32",
+                    "SW42"
+                ],
+                [
+                    "SW42",
+                    "CM2CB"
+                ]
+            ],
+            "period": 32000,
+            "payload": 1483,
+            "e2e_delay": 32000,
+            "jitter": 3200
+        },
+        {
+            "flow_id": "F5",
+            "src": "CM1CA",
+            "dst": "DU3",
+            "path": [
+                [
+                    "CM1CA",
+                    "SW41"
+                ],
+                [
+                    "SW41",
+                    "SW31"
+                ],
+                [
+                    "SW31",
+                    "SW21"
+                ],
+                [
+                    "SW21",
+                    "SW11"
+                ],
+                [
+                    "SW11",
+                    "DU3"
+                ]
+            ],
+            "period": 32000,
+            "payload": 1153,
+            "e2e_delay": 32000,
+            "jitter": 3200
+        },
+        {
+            "flow_id": "F6",
+            "src": "DU2",
+            "dst": "SBAND2",
+            "path": [
+                [
+                    "DU2",
+                    "SW11"
+                ],
+                [
+                    "SW11",
+                    "SW21"
+                ],
+                [
+                    "SW21",
+                    "SW12"
+                ],
+                [
+                    "SW12",
+                    "SBAND2"
+                ]
+            ],
+            "period": 64000,
+            "payload": 1016,
+            "e2e_delay": 64000,
+            "jitter": 6400
+        },
+        {
+            "flow_id": "F7",
+            "src": "MIMU2",
+            "dst": "SM2CB",
+            "path": [
+                [
+                    "MIMU2",
+                    "SW13"
+                ],
+                [
+                    "SW13",
+                    "SW22"
+                ],
+                [
+                    "SW22",
+                    "SW32"
+                ],
+                [
+                    "SW32",
+                    "SW42"
+                ],
+                [
+                    "SW42",
+                    "SW52"
+                ],
+                [
+                    "SW52",
+                    "SM2CB"
+                ]
+            ],
+            "period": 64000,
+            "payload": 1433,
+            "e2e_delay": 64000,
+            "jitter": 6400
+        },
+        {
+            "flow_id": "F8",
+            "src": "SM1CA",
+            "dst": "LCM2",
+            "path": [
+                [
+                    "SM1CA",
+                    "SW51"
+                ],
+                [
+                    "SW51",
+                    "SW8"
+                ],
+                [
+                    "SW8",
+                    "SW32"
+                ],
+                [
+                    "SW32",
+                    "LCM2"
+                ]
+            ],
+            "period": 64000,
+            "payload": 646,
+            "e2e_delay": 64000,
+            "jitter": 6400
+        },
+        {
+            "flow_id": "F9",
+            "src": "SMRIU2",
+            "dst": "StarTr1",
+            "path": [
+                [
+                    "SMRIU2",
+                    "SW6"
+                ],
+                [
+                    "SW6",
+                    "SW31"
+                ],
+                [
+                    "SW31",
+                    "SW21"
+                ],
+                [
+                    "SW21",
+                    "SW13"
+                ],
+                [
+                    "SW13",
+                    "StarTr1"
+                ]
+            ],
+            "period": 128000,
+            "payload": 1504,
+            "e2e_delay": 128000,
+            "jitter": 12800
+        },
+        {
+            "flow_id": "F10",
+            "src": "SM1CA",
+            "dst": "DU3",
+            "path": [
+                [
+                    "SM1CA",
+                    "SW51"
+                ],
+                [
+                    "SW51",
+                    "SW41"
+                ],
+                [
+                    "SW41",
+                    "SW31"
+                ],
+                [
+                    "SW31",
+                    "SW21"
+                ],
+                [
+                    "SW21",
+                    "SW11"
+                ],
+                [
+                    "SW11",
+                    "DU3"
+                ]
+            ],
+            "period": 4000,
+            "payload": 305,
+            "e2e_delay": 4000,
+            "jitter": 400
+        },
+        {
+            "flow_id": "F11",
+            "src": "SM2CB",
+            "dst": "BFCU",
+            "path": [
+                [
+                    "SM2CB",
+                    "SW52"
+                ],
+                [
+                    "SW52",
+                    "SW42"
+                ],
+                [
+                    "SW42",
+                    "SW32"
+                ],
+                [
+                    "SW32",
+                    "SW22"
+                ],
+                [
+                    "SW22",
+                    "BFCU"
+                ]
+            ],
+            "period": 8000,
+            "payload": 845,
+            "e2e_delay": 8000,
+            "jitter": 800
         }
-      ]
+    ],
+    "links_operations": {
+        "('RCM2', 'SW32')": [],
+        "('SW32', 'RCM2')": [],
+        "('SW32', 'LCM2')": [],
+        "('SW32', 'FCM2')": [],
+        "('SW32', 'SW22')": [],
+        "('SW32', 'SW7')": [],
+        "('SW32', 'SW8')": [],
+        "('SW32', 'SW6')": [],
+        "('SW32', 'SW42')": [],
+        "('LCM2', 'SW32')": [],
+        "('FCM2', 'SW32')": [],
+        "('SW22', 'CMRIU2')": [],
+        "('SW22', 'BFCU')": [],
+        "('SW22', 'SW11')": [],
+        "('SW22', 'SW12')": [],
+        "('SW22', 'SW13')": [],
+        "('SW22', 'SW14')": [],
+        "('SW22', 'SW32')": [],
+        "('SW22', 'SW7')": [],
+        "('SW7', 'SW21')": [],
+        "('SW42', 'SW52')": [],
+        "('SW52', 'SM2CB')": []
     },
-    "F1": {
-      "('MIMU3', 'SW13')": [
-        {
-          "start_us": 0,
-          "end_us": 154,
-          "gating_time": null
+    "links_gcl": {
+        "('RCM2', 'SW32')": {
+            "gcl_cycle": 1,
+            "gcl_length": 0
+        },
+        "('SW32', 'RCM2')": {
+            "gcl_cycle": 1,
+            "gcl_length": 0
+        },
+        "('SW32', 'LCM2')": {
+            "gcl_cycle": 1,
+            "gcl_length": 0
+        },
+        "('SW32', 'FCM2')": {
+            "gcl_cycle": 1,
+            "gcl_length": 0
+        },
+        "('SW32', 'SW22')": {
+            "gcl_cycle": 1,
+            "gcl_length": 0
+        },
+        "('SW32', 'SW7')": {
+            "gcl_cycle": 1,
+            "gcl_length": 0
+        },
+        "('SW32', 'SW8')": {
+            "gcl_cycle": 1,
+            "gcl_length": 0
+        },
+        "('SW32', 'SW6')": {
+            "gcl_cycle": 1,
+            "gcl_length": 0
+        },
+        "('SW32', 'SW42')": {
+            "gcl_cycle": 1,
+            "gcl_length": 0
+        },
+        "('LCM2', 'SW32')": {
+            "gcl_cycle": 1,
+            "gcl_length": 0
+        },
+        "('FCM2', 'SW32')": {
+            "gcl_cycle": 1,
+            "gcl_length": 0
+        },
+        "('SW22', 'CMRIU2')": {
+            "gcl_cycle": 1,
+            "gcl_length": 0
+        },
+        "('SW22', 'BFCU')": {
+            "gcl_cycle": 1,
+            "gcl_length": 0
+        },
+        "('SW22', 'SW11')": {
+            "gcl_cycle": 1,
+            "gcl_length": 0
+        },
+        "('SW22', 'SW12')": {
+            "gcl_cycle": 1,
+            "gcl_length": 0
+        },
+        "('SW22', 'SW13')": {
+            "gcl_cycle": 1,
+            "gcl_length": 0
+        },
+        "('SW22', 'SW14')": {
+            "gcl_cycle": 1,
+            "gcl_length": 0
+        },
+        "('SW22', 'SW32')": {
+            "gcl_cycle": 1,
+            "gcl_length": 0
+        },
+        "('SW22', 'SW7')": {
+            "gcl_cycle": 1,
+            "gcl_length": 0
+        },
+        "('SW7', 'SW21')": {
+            "gcl_cycle": 1,
+            "gcl_length": 0
+        },
+        "('SW42', 'SW52')": {
+            "gcl_cycle": 1,
+            "gcl_length": 0
+        },
+        "('SW52', 'SM2CB')": {
+            "gcl_cycle": 1,
+            "gcl_length": 0
         }
-      ],
-      "('SW13', 'SW21')": [
-        {
-          "start_us": 32,
-          "end_us": 315,
-          "gating_time": null
-        }
-      ],
-      "('SW21', 'SW14')": [
-        {
-          "start_us": 64,
-          "end_us": 352,
-          "gating_time": 322
-        }
-      ],
-      "('SW14', 'DU5')": [
-        {
-          "start_us": 354,
-          "end_us": 513,
-          "gating_time": null
-        }
-      ]
-    }
-  },
-  "time": {
-    "current_time_us": 0
-  }
+    },
+    "temp_operations": [],
+    "last_action": null,
+    "reward": 0
 }

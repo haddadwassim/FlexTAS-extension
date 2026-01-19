@@ -1,0 +1,120 @@
+{
+    "flow_index": 0,
+    "reward": 0,
+    "last_action": null,
+    "links_operations": {
+        "('SBAND2', 'SW12')": [],
+        "('SW12', 'SBAND2')": [],
+        "('SW12', 'SBAND1')": [],
+        "('SW12', 'SW21')": [],
+        "('SW12', 'SW22')": [],
+        "('SBAND1', 'SW12')": [],
+        "('SW21', 'CMRIU1')": [],
+        "('SW21', 'SW11')": [],
+        "('SW21', 'SW12')": [],
+        "('SW21', 'SW13')": [],
+        "('SW21', 'SW14')": [],
+        "('SW21', 'SW31')": [],
+        "('SW21', 'SW7')": [],
+        "('SW22', 'CMRIU2')": [],
+        "('SW22', 'BFCU')": [],
+        "('SW22', 'SW11')": [],
+        "('SW22', 'SW12')": [],
+        "('SW22', 'SW13')": [],
+        "('SW22', 'SW14')": [],
+        "('SW22', 'SW32')": [],
+        "('SW31', 'SW6')": [],
+        "('SW6', 'SMRIU2')": []
+    },
+    "links_gcl": {
+        "('SBAND2', 'SW12')": {
+            "gcl_cycle": 1,
+            "gcl_length": 0
+        },
+        "('SW12', 'SBAND2')": {
+            "gcl_cycle": 1,
+            "gcl_length": 0
+        },
+        "('SW12', 'SBAND1')": {
+            "gcl_cycle": 1,
+            "gcl_length": 0
+        },
+        "('SW12', 'SW21')": {
+            "gcl_cycle": 1,
+            "gcl_length": 0
+        },
+        "('SW12', 'SW22')": {
+            "gcl_cycle": 1,
+            "gcl_length": 0
+        },
+        "('SBAND1', 'SW12')": {
+            "gcl_cycle": 1,
+            "gcl_length": 0
+        },
+        "('SW21', 'CMRIU1')": {
+            "gcl_cycle": 1,
+            "gcl_length": 0
+        },
+        "('SW21', 'SW11')": {
+            "gcl_cycle": 1,
+            "gcl_length": 0
+        },
+        "('SW21', 'SW12')": {
+            "gcl_cycle": 1,
+            "gcl_length": 0
+        },
+        "('SW21', 'SW13')": {
+            "gcl_cycle": 1,
+            "gcl_length": 0
+        },
+        "('SW21', 'SW14')": {
+            "gcl_cycle": 1,
+            "gcl_length": 0
+        },
+        "('SW21', 'SW31')": {
+            "gcl_cycle": 1,
+            "gcl_length": 0
+        },
+        "('SW21', 'SW7')": {
+            "gcl_cycle": 1,
+            "gcl_length": 0
+        },
+        "('SW22', 'CMRIU2')": {
+            "gcl_cycle": 1,
+            "gcl_length": 0
+        },
+        "('SW22', 'BFCU')": {
+            "gcl_cycle": 1,
+            "gcl_length": 0
+        },
+        "('SW22', 'SW11')": {
+            "gcl_cycle": 1,
+            "gcl_length": 0
+        },
+        "('SW22', 'SW12')": {
+            "gcl_cycle": 1,
+            "gcl_length": 0
+        },
+        "('SW22', 'SW13')": {
+            "gcl_cycle": 1,
+            "gcl_length": 0
+        },
+        "('SW22', 'SW14')": {
+            "gcl_cycle": 1,
+            "gcl_length": 0
+        },
+        "('SW22', 'SW32')": {
+            "gcl_cycle": 1,
+            "gcl_length": 0
+        },
+        "('SW31', 'SW6')": {
+            "gcl_cycle": 1,
+            "gcl_length": 0
+        },
+        "('SW6', 'SMRIU2')": {
+            "gcl_cycle": 1,
+            "gcl_length": 0
+        }
+    },
+    "temp_operations": []
+}

@@ -11,12 +11,15 @@ import os
 import pandas as pd
 import random
 from typing import SupportsFloat, Any, Optional
+import networkx as nx
+import json
 
+
+from  src.network.net import FlowGenerator  
 from definitions import ROOT_DIR, OUT_DIR, LOG_DIR
 from src.lib.graph import neighbors_within_distance
 from src.lib.operation import Operation, check_operation_isolation
 from src.network.net import Flow, Link, Net, PERIOD_SET, generate_cev, generate_flows, Network
-from network_state import NetworkState
 
 MAX_NEIGHBORS = 20
 MAX_REMAIN_HOPS = 10
@@ -272,6 +275,9 @@ class NetEnv(gym.Env):
 
         # action space: enable gating or not for current operation
         self.action_space = spaces.Discrete(2)
+
+        self.flow_generator = FlowGenerator(self.graph)
+        self.flow_generator.num_generated_flows = self.num_flows 
 
         logger = logging.getLogger(f"{__name__}.{os.getpid()}")
         logger.setLevel(logging.INFO)
@@ -541,53 +547,257 @@ class NetEnv(gym.Env):
             gcl_info.gcl_length = new_length
         return True
 
-    def add_flows(self, new_flows: list[Flow], network_state: NetworkState = None):
-        for flow in new_flows:
-            if flow in self.flows:
-                continue
-            self.flows.append(flow)
-            self.logger.info(f"Added new flow: {flow}")
+    def reconfigure(self, num_flows=1, action=None):
+        """
+        Placeholder for dynamic reconfiguration.
+        This will be where we add/remove flows or modify slices.
+        """
+        print("Reconfiguration called!")
+        self.add_flow(num_flows)
+        # For now, do nothing
 
-            if network_state is not None:
-                # Add flow to state for logging and scheduling
-                network_state.flows[flow.flow_id] = {
-                    "src": flow.src_id,
-                    "dst": flow.dst_id,
-                    "path": flow.path,
-                    "period": flow.period,
-                    "payload": flow.payload,
-                    "e2e_delay": flow.e2e_delay,
-                    "jitter": flow.jitter
-                }
-                network_state.schedule[flow.flow_id] = {}
-
-        self.num_flows = len(self.flows)
     
-    def update_network_state(self, network_state: "NetworkState"):
+    def add_flow(self, num_flows):
         """
-        Update the network_state.schedule dict with the operations scheduled
-        in this environment.
-
-        Keys are converted to JSON-safe strings.
+        Dynamically add a new flow using the persistent FlowGenerator.
         """
-        for link, ops in self.links_operations.items():
-            link_id = str(link.link_id)  # Use the Link's built-in ID
+        for _ in range(num_flows):
+            
+            print("Adding a new flow...")
 
-            for flow, operation in ops:
-                flow_id = str(flow.flow_id)  # ensure JSON-safe string
+            new_flow = self.flow_generator(num_flows=1)[0]  # unique ID is preserved
 
-                # Initialize dictionaries if they don't exist
-                if flow_id not in network_state.schedule:
-                    network_state.schedule[flow_id] = {}
-                if link_id not in network_state.schedule[flow_id]:
-                    network_state.schedule[flow_id][link_id] = []
+            self.flows.append(new_flow)
+            self.num_flows = len(self.flows)
 
-                # Append operation info
-                network_state.schedule[flow_id][link_id].append({
-                    "start_us": operation.earliest_time,
-                    "end_us": operation.end_time,
-                    "gating_time": operation.gating_time
-                })
+            print(f"Flow {new_flow.flow_id} added: {new_flow.src_id} -> {new_flow.dst_id}, path: {new_flow.path}")
+
+
+
+    def save_network_state(self, filename: str):
+        """
+        Save the current environment network state to a JSON file (human-readable).
+        """
+        state = {
+            'flow_index': self.flow_index,
+            'num_flows': self.num_flows,
+            'flows': [
+                {
+                    'flow_id': f.flow_id,
+                    'src': f.src_id,
+                    'dst': f.dst_id,
+                    'path': f.path,
+                    'period': f.period,
+                    'payload': f.payload,
+                    'e2e_delay': f.e2e_delay,
+                    'jitter': f.jitter
+                } for f in self.flows
+            ],
+            'links_operations': {
+                f"{link.link_id}": [
+                    {
+                        'flow_id': op[0].flow_id,
+                        'earliest_enqueue': op[1].earliest_time,
+                        'latest_dequeue': op[1].latest_time,
+                        'gating_time': op[1].gating_time,
+                        'end_time': op[1].end_time
+                    } for op in ops
+                ] for link, ops in self.links_operations.items()
+            },
+            'links_gcl': {
+                f"{link.link_id}": {
+                    'gcl_cycle': gcl.gcl_cycle,
+                    'gcl_length': gcl.gcl_length
+                } for link, gcl in self.links_gcl.items()
+            },
+            'temp_operations': [
+                {
+                    'link_id': link.link_id,
+                    'earliest_enqueue': op.earliest_time,
+                    'latest_dequeue': op.latest_time,
+                    'gating_time': op.gating_time,
+                    'end_time': op.end_time
+                } for link, op in self.temp_operations
+            ],
+            'last_action': self.last_action,
+            'reward': self.reward
+        }
+
+        with open(filename, 'w') as f:
+            json.dump(state, f, indent=4)
+        
+        print(f"Network state saved to {filename}")
+
+    def load_network_state(self, filename: str):
+        """
+        Load network state from a JSON file.
+        """
+        with open(filename, 'r') as f:
+            state = json.load(f)
+
+        self.flow_index = state['flow_index']
+        self.num_flows = state['num_flows']
+
+        # Recreate flows
+        self.flows = []
+        for f in state['flows']:
+            flow = Flow(
+                flow_id=f['flow_id'],
+                src_id=f['src'],
+                dst_id=f['dst'],
+                path=f['path'],
+                period=f['period'],
+                payload=f['payload'],
+                e2e_delay=f['e2e_delay'],
+                jitter=f['jitter']
+            )
+            self.flows.append(flow)
+
+        # Restore link operations
+        self.links_operations.clear()
+        for link_id, ops_list in state['links_operations'].items():
+            link = self.link_dict.get(link_id)
+            if link is None:
+                continue
+            self.links_operations[link] = []
+            for op in ops_list:
+                flow = next((f for f in self.flows if f.flow_id == op['flow_id']), None)
+                if flow is None:
+                    continue
+                operation = Operation(
+                    earliest_time=op['earliest_enqueue'],
+                    latest_time=op['latest_dequeue'],
+                    gating_time=op.get('gating_time'),
+                    end_time=op['end_time']
+                )
+                self.links_operations[link].append((flow, operation))
+
+        # Restore links GCL
+        for link_id, gcl in state['links_gcl'].items():
+            link = self.link_dict.get(link_id)
+            if link is None:
+                continue
+            self.links_gcl[link].gcl_cycle = gcl['gcl_cycle']
+            self.links_gcl[link].gcl_length = gcl['gcl_length']
+
+        # Restore temp operations
+        self.temp_operations = []
+        for op in state['temp_operations']:
+            link = self.link_dict.get(op['link_id'])
+            if link is None:
+                continue
+            operation = Operation(
+                earliest_time=op['earliest_enqueue'],
+                latest_time=op['latest_dequeue'],
+                gating_time=op.get('gating_time'),
+                end_time=op['end_time']
+            )
+            self.temp_operations.append((link, operation))
+
+        self.last_action = state['last_action']
+        self.reward = state['reward']
+
+        print(f"Network state loaded from {filename}")
+
+    def save_schedule_state(self, filename: str):
+        """
+        Save current scheduling state (not topology / flows).
+        """
+        state = {
+            "flow_index": self.flow_index,
+            "reward": self.reward,
+            "last_action": self.last_action,
+
+            "links_operations": {
+                str(link.link_id): [
+                    {
+                        "flow_id": flow.flow_id,
+                        "earliest_enqueue": op.earliest_time,
+                        "latest_dequeue": op.latest_time,
+                        "gating_time": op.gating_time,
+                        "end_time": op.end_time,
+                    }
+                    for flow, op in ops
+                ]
+                for link, ops in self.links_operations.items()
+            },
+
+            "links_gcl": {
+                str(link.link_id): {
+                    "gcl_cycle": gcl.gcl_cycle,
+                    "gcl_length": gcl.gcl_length,
+                }
+                for link, gcl in self.links_gcl.items()
+            },
+
+            "temp_operations": [
+                {
+                    "link_id": str(link.link_id),
+                    "earliest_enqueue": op.earliest_time,
+                    "latest_dequeue": op.latest_time,
+                    "gating_time": op.gating_time,
+                    "end_time": op.end_time,
+                }
+                for link, op in self.temp_operations
+            ]
+        }
+
+        with open(filename, "w") as f:
+            json.dump(state, f, indent=4)
+
+        print(f"Schedule state saved to {filename}")
+
+    def load_schedule_state(self, filename: str):
+        """
+        Load scheduling state. Network + flows must already exist.
+        """
+        with open(filename, "r") as f:
+            state = json.load(f)
+
+        self.flow_index = state["flow_index"]
+        self.reward = state["reward"]
+        self.last_action = state["last_action"]
+
+        # Restore GCL
+        self.links_gcl.clear()
+        for link_id, gcl in state["links_gcl"].items():
+            link = self.link_dict[eval(link_id)]
+            self.links_gcl[link].gcl_cycle = gcl["gcl_cycle"]
+            self.links_gcl[link].gcl_length = gcl["gcl_length"]
+
+        # Restore scheduled operations
+        self.links_operations.clear()
+        for link_id, ops in state["links_operations"].items():
+            link = self.link_dict[eval(link_id)]
+            for item in ops:
+                flow = next(f for f in self.flows if f.flow_id == item["flow_id"])
+                op = Operation(
+                    item["earliest_enqueue"],
+                    None,
+                    item["latest_dequeue"],
+                    item["end_time"]
+                )
+                op.gating_time = item["gating_time"]
+                self.links_operations[link].append((flow, op))
+
+        # Restore temp operations
+        self.temp_operations.clear()
+        for item in state["temp_operations"]:
+            link = self.link_dict[eval(item["link_id"])]
+            op = Operation(
+                item["earliest_enqueue"],
+                None,
+                item["latest_dequeue"],
+                item["end_time"]
+            )
+            op.gating_time = item["gating_time"]
+            self.temp_operations.append((link, op))
+
+        print(f"Schedule state loaded from {filename}")
+
+
+
+
 
 
 
