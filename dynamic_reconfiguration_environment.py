@@ -547,80 +547,64 @@ class NetEnv(gym.Env):
             gcl_info.gcl_length = new_length
         return True
 
-    def reconfigure(self, num_flows=1, action=None):
+    def reconfigure(self, event: dict, action=None):
         """
         Placeholder for dynamic reconfiguration.
         This will be where we add/remove flows or modify slices.
         """
         print("Reconfiguration called!")
-        self.add_flow(num_flows)
-        # For now, do nothing
+
+        add_n = event.get("add", 0)
+        remove_ids = event.get("remove", [])
+
+        if add_n > 0:
+            self.add_flow(add_n)
+
+        if remove_ids:
+            self.remove_flows(remove_ids)
 
     
-    def add_flow(self, num_flows):
+    def add_flow(self, num_flows: int):
         """
-        Dynamically add a new flow using the persistent FlowGenerator.
+        Dynamically add new flows using the persistent FlowGenerator.
         """
         for _ in range(num_flows):
-            
             print("Adding a new flow...")
 
-            new_flow = self.flow_generator(num_flows=1)[0]  # unique ID is preserved
-
+            new_flow = self.flow_generator(num_flows=1)[0]
             self.flows.append(new_flow)
+
             self.num_flows = len(self.flows)
 
-            print(f"Flow {new_flow.flow_id} added: {new_flow.src_id} -> {new_flow.dst_id}, path: {new_flow.path}")
-    
-    def remove_flow(self, flow_id: str):
-        """
-        Remove a flow and all its scheduled operations.
-        """
-        flow_indices = {f.flow_id: i for i, f in enumerate(self.flows)}
-        if flow_id not in flow_indices:
-            raise ValueError(f"Flow {flow_id} not found")
-
-        remove_idx = flow_indices[flow_id]
-
-        if remove_idx < self.flow_index:
-            raise RuntimeError(
-                f"Cannot remove already committed flow {flow_id} "
-                f"(index {remove_idx} < flow_index {self.flow_index})"
+            print(
+                f"Flow {new_flow.flow_id} added: "
+                f"{new_flow.src_id} -> {new_flow.dst_id}, "
+                f"path: {new_flow.path}"
             )
+    
+    def remove_flows(self, flow_ids):
+        """
+        Remove flows and clean all scheduling state related to them.
+        """
+        print(f"Removing flows: {flow_ids}")
 
-        flow = self.flows[remove_idx]
-        print(f"Removing flow {flow.flow_id}")
+        self.flows = [f for f in self.flows if f.flow_id not in flow_ids]
+        self.num_flows = len(self.flows)
 
         for link_key, ops in self.links_operations.items():
-            new_ops = []
-            removed_count = 0
-
-            for op in ops:
-                scheduled_flow = op[0] if isinstance(op, tuple) else op.get("flow")
-                if scheduled_flow.flow_id == flow.flow_id:
-                    removed_count += 1
-                else:
-                    new_ops.append(op)
-
-            if removed_count > 0:
-                self.links_operations[link_key] = new_ops
-                self.links_gcl[link_key]["gcl_length"] = max(
-                    0,
-                    self.links_gcl[link_key]["gcl_length"] - removed_count
-                )
+            self.links_operations[link_key] = [
+                op for op in ops if op["flow_id"] not in flow_ids
+            ]
 
         self.temp_operations = [
             op for op in self.temp_operations
-            if op[0].flow_id != flow.flow_id
+            if op.get("flow_id") not in flow_ids
         ]
 
-        self.flows.pop(remove_idx)
-        self.num_flows = len(self.flows)
+        if self.flow_index >= self.num_flows:
+            self.flow_index = max(0, self.num_flows - 1)
 
-        if remove_idx < self.flow_index:
-            self.flow_index -= 1
-
-        print(f"Flow {flow_id} removed successfully")
+        print("Flow removal completed.")
 
 
 
