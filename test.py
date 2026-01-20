@@ -14,3 +14,4 @@ env.reconfigure({"remove": ["F1", "F3"]})
 
 print("\n--- After removing flows ---")
 print([f.flow_id for f in env.flows])
+ 
