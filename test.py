@@ -1,17 +1,25 @@
 from dynamic_reconfiguration_environment import NetEnv
 
+# 1️⃣ Create env
 env = NetEnv()
 
 print("\n--- Initial flows ---")
 print([f.flow_id for f in env.flows])
 
+
 env.reconfigure({"add": 2})
 
-print("\n--- After adding flows ---")
+
+
+print("\nFlows after add:")
 print([f.flow_id for f in env.flows])
 
-env.reconfigure({"remove": ["F1", "F3"]})
 
-print("\n--- After removing flows ---")
+# 6️⃣ Remove flows
+to_remove = [env.flows[1].flow_id, env.flows[3].flow_id]
+print(f"\n--- Reconfiguration: remove {to_remove} ---")
+env.reconfigure({"remove": to_remove})
+
+print("\nFlows after remove:")
 print([f.flow_id for f in env.flows])
- 
+

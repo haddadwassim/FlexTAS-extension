@@ -17,7 +17,7 @@ from typing import Union, List, Optional, Dict, Any, Tuple
 from definitions import ROOT_DIR, OUT_DIR, LOG_DIR
 from src.lib.graph import neighbors_within_distance
 from src.lib.operation import Operation, check_operation_isolation
-from src.network.Old_net import Flow, Link, Net, PERIOD_SET, generate_cev, generate_flows, Network, _generate_graph, RandomGraph
+from src.network.net import Flow, Link, Net, PERIOD_SET, generate_cev, generate_flows, Network, _generate_graph, RandomGraph, FlowGenerator
 
 MAX_NEIGHBORS = 20
 MAX_REMAIN_HOPS = 10
@@ -344,12 +344,6 @@ class GlobalAwareStateEncoder:
         
         return np.mean(difficulty_scores)
 
-    def resort(self):
-        self.flows = sorted(
-            self.flows,
-            key=lambda f: (f.period, f.jitter, f.payload)
-        )
-
 
     def state(self):
         flow = self.env.flows[self.env.flow_index]
@@ -414,6 +408,9 @@ class NetEnv(gym.Env):
 
         self.state_encoder: GlobalAwareStateEncoder = GlobalAwareStateEncoder(self)
         self.observation_space: spaces.Dict = self.state_encoder.observation_space
+        self.flow_generator = FlowGenerator(self.graph)
+        self.flow_generator.num_generated_flows = len(self.flows)
+
 
         # Simple binary action space: enable gating or not for current operation
         self.action_space = spaces.Discrete(2)
@@ -501,6 +498,80 @@ class NetEnv(gym.Env):
             if offset is not None:
                 return offset
         return None
+
+    def resort(self):
+        self.flows = sorted(
+            self.flows,
+            key=lambda f: (f.period, f.jitter, f.payload)
+        )
+
+    def reconfigure(self, event: dict):
+        """
+        Dynamic reconfiguration entry point.
+        event example:
+        {
+            "add": 2,
+            "remove": ["F3", "F7"]
+        }
+        """
+        print("Reconfiguration called!")
+
+        add_n = event.get("add", 0)
+        remove_ids = event.get("remove", [])
+
+        if add_n > 0:
+            self.add_flows(add_n)
+
+        if remove_ids:
+            self.remove_flows(remove_ids)
+
+        # Always normalize after changes
+        self.resort()
+        self.num_flows = len(self.flows)
+
+        if self.flow_index >= self.num_flows:
+            self.flow_index = max(0, self.num_flows - 1)
+
+    def add_flows(self, num_flows: int):
+        """
+        Dynamically add new flows.
+        """
+        for _ in range(num_flows):
+            new_flow = self.flow_generator(num_flows=1)[0]
+            self.flows.append(new_flow)
+
+            print(
+                f"Flow {new_flow.flow_id} added: "
+                f"{new_flow.src_id} -> {new_flow.dst_id}, "
+                f"path length {len(new_flow.path)}"
+            )
+
+    def remove_flows(self, flow_ids: list[str]):
+        """
+        Remove flows and clean all scheduling state related to them.
+        """
+        print(f"Removing flows: {flow_ids}")
+
+        # Remove from flows list
+        self.flows = [f for f in self.flows if f.flow_id not in flow_ids]
+
+        # Remove scheduled operations
+        for link, ops in self.links_operations.items():
+            self.links_operations[link] = [
+                (flow, op) for (flow, op) in ops
+                if flow.flow_id not in flow_ids
+            ]
+
+        # Remove temp operations (current flow mid-hop)
+        self.temp_operations = [
+            (link, op) for (link, op) in self.temp_operations
+            if self.current_flow().flow_id not in flow_ids
+        ]
+
+
+
+    
+
 
     def step(
             self, action: ActType
