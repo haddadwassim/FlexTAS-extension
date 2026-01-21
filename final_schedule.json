@@ -1,0 +1,244 @@
+{
+  "SW21": {
+    "timeline": [
+      {
+        "flow_id": "F3",
+        "egress_port": "SW21->SW11",
+        "start": 52,
+        "end": 107
+      },
+      {
+        "flow_id": "F5",
+        "egress_port": "SW21->SW31",
+        "start": 117,
+        "end": 176
+      },
+      {
+        "flow_id": "F6",
+        "egress_port": "SW21->SW13",
+        "start": 171,
+        "end": 257
+      }
+    ]
+  },
+  "SW11": {
+    "timeline": [
+      {
+        "flow_id": "F5",
+        "egress_port": "SW11->SW21",
+        "start": 56,
+        "end": 115
+      },
+      {
+        "flow_id": "F3",
+        "egress_port": "SW11->DU3",
+        "start": 109,
+        "end": 164
+      }
+    ]
+  },
+  "SW12": {
+    "timeline": [
+      {
+        "flow_id": "F6",
+        "egress_port": "SW12->SW21",
+        "start": 83,
+        "end": 169
+      }
+    ]
+  },
+  "SW13": {
+    "timeline": [
+      {
+        "flow_id": "F6",
+        "egress_port": "SW13->StarTr1",
+        "start": 259,
+        "end": 345
+      },
+      {
+        "flow_id": "F2",
+        "egress_port": "SW13->StarTr1",
+        "start": 377,
+        "end": 968
+      }
+    ]
+  },
+  "SW22": {
+    "timeline": [
+      {
+        "flow_id": "F1",
+        "egress_port": "SW22->BFCU",
+        "start": 215,
+        "end": 323
+      },
+      {
+        "flow_id": "F2",
+        "egress_port": "SW22->SW13",
+        "start": 295,
+        "end": 757
+      }
+    ]
+  },
+  "SW42": {
+    "timeline": [
+      {
+        "flow_id": "F4",
+        "egress_port": "SW42->SW32",
+        "start": 102,
+        "end": 207
+      },
+      {
+        "flow_id": "F8",
+        "egress_port": "SW42->CM2CB",
+        "start": 503,
+        "end": 721
+      }
+    ]
+  },
+  "SW32": {
+    "timeline": [
+      {
+        "flow_id": "F1",
+        "egress_port": "SW32->SW22",
+        "start": 105,
+        "end": 213
+      },
+      {
+        "flow_id": "F4",
+        "egress_port": "SW32->SW7",
+        "start": 209,
+        "end": 314
+      },
+      {
+        "flow_id": "F2",
+        "egress_port": "SW32->SW22",
+        "start": 213,
+        "end": 546
+      },
+      {
+        "flow_id": "F7",
+        "egress_port": "SW32->RCM2",
+        "start": 279,
+        "end": 348
+      }
+    ]
+  },
+  "SW52": {
+    "timeline": [
+      {
+        "flow_id": "F8",
+        "egress_port": "SW52->SW42",
+        "start": 278,
+        "end": 501
+      }
+    ]
+  },
+  "SW7": {
+    "timeline": [
+      {
+        "flow_id": "F7",
+        "egress_port": "SW7->SW32",
+        "start": 208,
+        "end": 277
+      },
+      {
+        "flow_id": "F4",
+        "egress_port": "SW7->SW31",
+        "start": 316,
+        "end": 421
+      }
+    ]
+  },
+  "SW31": {
+    "timeline": [
+      {
+        "flow_id": "F9",
+        "egress_port": "SW31->SW41",
+        "start": 66,
+        "end": 135
+      },
+      {
+        "flow_id": "F0",
+        "egress_port": "SW31->SW6",
+        "start": 84,
+        "end": 419
+      },
+      {
+        "flow_id": "F8",
+        "egress_port": "SW31->SW8",
+        "start": 91,
+        "end": 185
+      },
+      {
+        "flow_id": "F7",
+        "egress_port": "SW31->SW7",
+        "start": 137,
+        "end": 206
+      },
+      {
+        "flow_id": "F5",
+        "egress_port": "SW31->SW41",
+        "start": 178,
+        "end": 237
+      },
+      {
+        "flow_id": "F4",
+        "egress_port": "SW31->LCM1",
+        "start": 423,
+        "end": 528
+      }
+    ]
+  },
+  "SW41": {
+    "timeline": [
+      {
+        "flow_id": "F7",
+        "egress_port": "SW41->SW31",
+        "start": 66,
+        "end": 135
+      },
+      {
+        "flow_id": "F9",
+        "egress_port": "SW41->CM1CA",
+        "start": 137,
+        "end": 206
+      },
+      {
+        "flow_id": "F5",
+        "egress_port": "SW41->SW51",
+        "start": 239,
+        "end": 298
+      }
+    ]
+  },
+  "SW51": {
+    "timeline": [
+      {
+        "flow_id": "F5",
+        "egress_port": "SW51->SM1CA",
+        "start": 300,
+        "end": 359
+      }
+    ]
+  },
+  "SW8": {
+    "timeline": [
+      {
+        "flow_id": "F8",
+        "egress_port": "SW8->SW52",
+        "start": 187,
+        "end": 405
+      }
+    ]
+  },
+  "SW6": {
+    "timeline": [
+      {
+        "flow_id": "F0",
+        "egress_port": "SW6->SMRIU1",
+        "start": 168,
+        "end": 632
+      }
+    ]
+  }
+}

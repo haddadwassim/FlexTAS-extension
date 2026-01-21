@@ -13,6 +13,7 @@ import pandas as pd
 import random
 from typing import SupportsFloat, Any, Optional
 from typing import Union, List, Optional, Dict, Any, Tuple
+import json
 
 from definitions import ROOT_DIR, OUT_DIR, LOG_DIR
 from src.lib.graph import neighbors_within_distance
@@ -568,65 +569,39 @@ class NetEnv(gym.Env):
             if self.current_flow().flow_id not in flow_ids
         ]
 
-
-    def get_switch_schedules(self):
+ 
+    def export_switch_timelines_to_json(self, filename="final_schedule.json"):
         """
-        Inspect scheduling state per switch.
-        Returns:
-            dict[switch_id] -> list of operations
+        Exports the committed operations per switch into a JSON file.
+        Each switch has a 'timeline' list of flows with start/end times.
         """
-        schedules = {}
+        switch_timelines = {}
 
         for link, ops in self.links_operations.items():
-            u, v = link.link_id
+            src, dst = link.link_id
 
-            # Only switches act as schedulers
-            if self.graph.nodes[u]["node_type"] != "SW":
+            # only switches own schedules
+            if self.graph.nodes[src]["node_type"] != "SW":
                 continue
 
-            schedules.setdefault(u, [])
+            switch_timelines.setdefault(src, {"timeline": []})
 
-            for op in ops:
-                schedules[u].append({
-                    "flow_id": op["flow_id"],
-                    "start": op["start"],
-                    "end": op["end"],
-                    "link": f"{u}->{v}",
-                    "queue": op.get("queue", None)
+            for flow, op in ops:
+                switch_timelines[src]["timeline"].append({
+                    "flow_id": flow.flow_id,
+                    "egress_port": f"{src}->{dst}",
+                    "start": op.start_time,
+                    "end": op.end_time
                 })
 
-        return schedules
+        # sort timeline per switch by start time
+        for sw in switch_timelines:
+            switch_timelines[sw]["timeline"].sort(key=lambda x: x["start"])
 
+        with open(filename, "w") as f:
+            json.dump(switch_timelines, f, indent=2)
 
-    def get_temp_schedules(self):
-        """
-        Inspect tentative (uncommitted) scheduling operations.
-        Returns a dict: switch_id -> list of ops
-        """
-        schedules = {}
-
-        for link, operation in self.temp_operations:
-            u, v = link.link_id
-            sw = u
-
-            # Use Operation attributes (based on FlexTAS Operation definition)
-            start = getattr(operation, "start_time", None)
-            end = getattr(operation, "latest_time", None)
-
-            # flow_id might be stored as operation.flow_index or operation.id
-            flow_id = getattr(operation, "flow_id", None)
-            if flow_id is None:
-                flow_id = getattr(operation, "flow_index", None)  # fallback
-
-            schedules.setdefault(sw, []).append({
-                "flow_id": flow_id,
-                "start": start,
-                "end": end,
-                "link": f"{u}->{v}"
-            })
-
-        return schedules
-
+        print(f"\n✔ Switch timelines exported to {filename}")
     
 
 
