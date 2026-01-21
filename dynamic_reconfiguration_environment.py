@@ -569,6 +569,63 @@ class NetEnv(gym.Env):
         ]
 
 
+    def get_switch_schedules(self):
+        """
+        Inspect scheduling state per switch.
+        Returns:
+            dict[switch_id] -> list of operations
+        """
+        schedules = {}
+
+        for link, ops in self.links_operations.items():
+            u, v = link.link_id
+
+            # Only switches act as schedulers
+            if self.graph.nodes[u]["node_type"] != "SW":
+                continue
+
+            schedules.setdefault(u, [])
+
+            for op in ops:
+                schedules[u].append({
+                    "flow_id": op["flow_id"],
+                    "start": op["start"],
+                    "end": op["end"],
+                    "link": f"{u}->{v}",
+                    "queue": op.get("queue", None)
+                })
+
+        return schedules
+
+
+    def get_temp_schedules(self):
+        """
+        Inspect tentative (uncommitted) scheduling operations.
+        Returns a dict: switch_id -> list of ops
+        """
+        schedules = {}
+
+        for link, operation in self.temp_operations:
+            u, v = link.link_id
+            sw = u
+
+            # Use Operation attributes (based on FlexTAS Operation definition)
+            start = getattr(operation, "start_time", None)
+            end = getattr(operation, "latest_time", None)
+
+            # flow_id might be stored as operation.flow_index or operation.id
+            flow_id = getattr(operation, "flow_id", None)
+            if flow_id is None:
+                flow_id = getattr(operation, "flow_index", None)  # fallback
+
+            schedules.setdefault(sw, []).append({
+                "flow_id": flow_id,
+                "start": start,
+                "end": end,
+                "link": f"{u}->{v}"
+            })
+
+        return schedules
 
     
 
