@@ -1,0 +1,66 @@
+=== ASCII SWITCH TIMELINES ===
+
+
+🔷 SWITCH SW11
+SW11->DU2       |                        ██████F9████      
+                 time →
+
+🔷 SWITCH SW12
+SW12->SW22      |    █F3      ██████F8████      
+                 time →
+
+🔷 SWITCH SW13
+SW13->SW21      |                  ████F4██      
+SW13->StarTr1   |            █████F7████         
+                 time →
+
+🔷 SWITCH SW14
+SW14->DU4       |                                  █████████F4████████      
+SW14->SW21      |       ███F5██                                             
+                 time →
+
+🔷 SWITCH SW21
+SW21->SW14      |                          ███F4██      
+SW21->SW31      |              ███F5██                  
+                 time →
+
+🔷 SWITCH SW22
+SW22->BFCU      |       ██F3                                 
+SW22->SW11      |            ██████F9████                    
+SW22->SW32      |                          ██████F8████      
+                 time →
+
+🔷 SWITCH SW31
+SW31->FCM1      |           ██F1█                  
+SW31->SW41      |          ██F2█                   
+SW31->SW6       |                     ███F5██      
+                 time →
+
+🔷 SWITCH SW32
+SW32->LCM2      |                                      ██████F8█████                                   
+SW32->SW42      |                                             █████████████████F6████████████████      
+                 time →
+
+🔷 SWITCH SW41
+SW41->SW31      |      ██F1█              
+SW41->SW51      |               ██F2      
+                 time →
+
+🔷 SWITCH SW42
+SW42->SW52      |         █████████████████F0███████████████            ████████████████████████F6██████████████████████      
+                 time →
+
+🔷 SWITCH SW51
+SW51->SM1CA     |                    ██F2      
+                 time →
+
+🔷 SWITCH SW52
+SW52->SM2CA     |                  ███████████████████████F0████████████████████████████████████████████████████F6████████████████████████████      
+                 time →
+
+🔷 SWITCH SW6
+SW6->SMRIU1     |                            ███F5██      
+SW6->SW31       |     ██F2█                               
+                 time →
+
+=== DONE ===
