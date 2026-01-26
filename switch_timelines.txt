@@ -2,65 +2,64 @@
 
 
 🔷 SWITCH SW11
-SW11->DU2       |                        ██████F9████      
+SW11->DU2       |                 ██FF0                                
+SW11->DU3       |                                    ██████FF5███      
                  time →
 
 🔷 SWITCH SW12
-SW12->SW22      |    █F3      ██████F8████      
+SW12->SBAND2    |                   ██FF2     
                  time →
 
 🔷 SWITCH SW13
-SW13->SW21      |                  ████F4██      
-SW13->StarTr1   |            █████F7████         
+SW13->MIMU2     |                         ██FF9                     
+SW13->SW21      |    ██FF6                                          
+SW13->SW22      |          █████████████████FF1██████████████       
+SW13->StarTr1   |                   ██FF3           █████FF8███     
                  time →
 
 🔷 SWITCH SW14
-SW14->DU4       |                                  █████████F4████████      
-SW14->SW21      |       ███F5██                                             
+SW14->DU4       |             ██FF6     
+SW14->SW21      |      ██FF0██FF3       
                  time →
 
 🔷 SWITCH SW21
-SW21->SW14      |                          ███F4██      
-SW21->SW31      |              ███F5██                  
+SW21->SW11      |           ███FF0                        
+SW21->SW12      |              ██FF2                      
+SW21->SW13      |               ██FF███FF9█████FF8██      
+SW21->SW14      |        ██FF6                            
                  time →
 
 🔷 SWITCH SW22
-SW22->BFCU      |       ██F3                                 
-SW22->SW11      |            ██████F9████                    
-SW22->SW32      |                          ██████F8████      
+SW22->CMRIU2    |                   ███████████████████████FF1█████████████████████      
+SW22->SW11      |                        ██████FF5███                                    
+SW22->SW32      |           ██████FF4███                                                 
                  time →
 
 🔷 SWITCH SW31
-SW31->FCM1      |           ██F1█                  
-SW31->SW41      |          ██F2█                   
-SW31->SW6       |                     ███F5██      
+SW31->SW21      |         ██FF2██FF9      
                  time →
 
 🔷 SWITCH SW32
-SW32->LCM2      |                                      ██████F8█████                                   
-SW32->SW42      |                                             █████████████████F6████████████████      
+SW32->FCM2      |              ██FF7                     
+SW32->SW22      |            ██████FF5███                
+SW32->SW42      |                       █████FF4███      
                  time →
 
 🔷 SWITCH SW41
-SW41->SW31      |      ██F1█              
-SW41->SW51      |               ██F2      
+SW41->SW31      |     ██FF2     
                  time →
 
 🔷 SWITCH SW42
-SW42->SW52      |         █████████████████F0███████████████            ████████████████████████F6██████████████████████      
-                 time →
-
-🔷 SWITCH SW51
-SW51->SM1CA     |                    ██F2      
+SW42->CM2CA     |                                  █████FF4███      
+SW42->SW32      |         ██FF7                                     
                  time →
 
 🔷 SWITCH SW52
-SW52->SM2CA     |                  ███████████████████████F0████████████████████████████████████████████████████F6████████████████████████████      
+SW52->SW42      |     ██FF7     
                  time →
 
 🔷 SWITCH SW6
-SW6->SMRIU1     |                            ███F5██      
-SW6->SW31       |     ██F2█                               
+SW6->SW31       |         ██FF9      
                  time →
 
 === DONE ===

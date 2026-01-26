@@ -1,0 +1,30 @@
+{
+  "nodes": {
+    "DU1": { "type": "ES" },
+    "SW11": { "type": "SW" },
+    "SW21": { "type": "SW" },
+    "CMRIU1": { "type": "ES" }
+  },
+
+  "links": [
+    { "src": "DU1", "dst": "SW11", "link_rate": 100 },
+    { "src": "SW11", "dst": "SW21", "link_rate": 100 },
+    { "src": "SW21", "dst": "CMRIU1", "link_rate": 100 }
+  ],
+
+  "flows": [
+    {
+      "id": "F0",
+      "src": "DU1",
+      "dst": "CMRIU1",
+      "payload": 512,
+      "period": 2000,
+      "jitter": 100,
+      "path": [
+        ["DU1", "SW11"],
+        ["SW11", "SW21"],
+        ["SW21", "CMRIU1"]
+      ]
+    }
+  ]
+}

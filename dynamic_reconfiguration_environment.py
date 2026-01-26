@@ -14,6 +14,8 @@ import random
 from typing import SupportsFloat, Any, Optional
 from typing import Union, List, Optional, Dict, Any, Tuple
 import json
+import networkx as nx
+
 
 from definitions import ROOT_DIR, OUT_DIR, LOG_DIR
 from src.lib.graph import neighbors_within_distance
@@ -378,9 +380,47 @@ class NetEnv(gym.Env):
         gcl_cycle: int = 1
         gcl_length: int = 0
 
-    def __init__(self, network: Network = None):
+    def __init__(
+        self,
+        network: Network = None,
+        network_file: str = None
+    ):
+
         super().__init__()
 
+        '''if network_file is not None:
+            with open(network_file, "r") as f:
+                data = json.load(f)
+
+            g = nx.DiGraph()
+
+            # nodes
+            for node_id, attrs in data["nodes"].items():
+                g.add_node(node_id, node_type=attrs["type"])
+
+            # links
+            for link in data["links"]:
+                g.add_edge(
+                    link["src"],
+                    link["dst"],
+                    link_rate=link.get("link_rate", link.get("rate", 100))
+                )
+
+            flows = []
+            for f in data["flows"]:
+                flows.append(
+                    Flow(
+                        flow_id=f["id"],
+                        src_id=f["src"],
+                        dst_id=f["dst"],
+                        payload=f["payload"],
+                        period=f["period"],
+                        jitter=f["jitter"],
+                        path=f["path"]
+                    )
+                )
+            network=Network(g, flows)'''
+        
         if network is None:
             graph = generate_cev()
             network = Network(graph, generate_flows(graph, 10))
@@ -603,7 +643,6 @@ class NetEnv(gym.Env):
 
         print(f"\n✔ Switch timelines exported to {filename}")
     
-
 
     def step(
             self, action: ActType

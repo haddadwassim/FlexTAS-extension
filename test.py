@@ -1,21 +1,19 @@
 from stable_baselines3 import PPO
 from dynamic_reconfiguration_environment import NetEnv
 import math
+import json
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 
 
 # ============================================================
-# ASCII VISUALIZATION (DEBUG / ANALYSIS ONLY)
+# ASCII VISUALIZATION (DEBUG / LOG FILE)
 # ============================================================
 
 def save_switch_timelines_ascii(env, filename="switch_timelines.txt", time_scale=10):
-    """
-    Save pretty ASCII timeline per switch / egress port into a text file.
-    time_scale = how many time units per character
-    """
     lines = []
     lines.append("=== ASCII SWITCH TIMELINES ===\n")
 
-    # Build: switch -> port -> list of (flow_id, start, end)
     timelines = {}
 
     for link, ops in env.links_operations.items():
@@ -24,7 +22,6 @@ def save_switch_timelines_ascii(env, filename="switch_timelines.txt", time_scale
 
         src, dst = link.link_id
 
-        # only switches own schedules
         if env.graph.nodes[src]["node_type"] != "SW":
             continue
 
@@ -37,11 +34,9 @@ def save_switch_timelines_ascii(env, filename="switch_timelines.txt", time_scale
                 (flow.flow_id, op.start_time, op.end_time)
             )
 
-    # Render per switch
     for sw, ports in sorted(timelines.items()):
         lines.append(f"\n🔷 SWITCH {sw}")
 
-        # compute global max time for alignment
         max_t = 0
         for ops in ports.values():
             for _, _, end in ops:
@@ -59,8 +54,7 @@ def save_switch_timelines_ascii(env, filename="switch_timelines.txt", time_scale
                 for i in range(s, min(e, width)):
                     line[i] = "█"
 
-                # label in the middle if possible
-                label = f"{flow_id}"
+                label = f"F{flow_id}"
                 mid = s + (e - s) // 2
                 for i, ch in enumerate(label):
                     idx = mid + i
@@ -73,7 +67,6 @@ def save_switch_timelines_ascii(env, filename="switch_timelines.txt", time_scale
 
     lines.append("\n=== DONE ===")
 
-    # write to file
     with open(filename, "w") as f:
         f.write("\n".join(lines))
 
@@ -81,12 +74,103 @@ def save_switch_timelines_ascii(env, filename="switch_timelines.txt", time_scale
 
 
 # ============================================================
+# GUI VISUALIZATION (MAIN TOOL)
+# ============================================================
+
+def plot_switch_timelines_gui(json_file="final_schedule.json"):
+    with open(json_file, "r") as f:
+        timelines = json.load(f)
+
+    fig, ax = plt.subplots(figsize=(16, 9))
+
+    # ---- color per flow ----
+    flow_colors = {}
+    color_cycle = plt.cm.tab20.colors
+    color_idx = 0
+
+    y = 0
+    yticks = []
+    ylabels = []
+
+    # ---- iterate switches ----
+    for sw, data in timelines.items():
+
+        # group by egress port
+        port_groups = {}
+
+        for entry in data["timeline"]:
+            port = entry["egress_port"]
+            port_groups.setdefault(port, []).append(entry)
+
+        # ---- draw one line per port ----
+        for port, entries in sorted(port_groups.items()):
+            yticks.append(y)
+            ylabels.append(f"{sw} | {port}")
+
+            for e in entries:
+                flow_id = e["flow_id"]
+                start = e["start"]
+                end = e["end"]
+
+                if flow_id not in flow_colors:
+                    flow_colors[flow_id] = color_cycle[color_idx % len(color_cycle)]
+                    color_idx += 1
+
+                ax.barh(
+                    y,
+                    end - start,
+                    left=start,
+                    height=0.6,
+                    color=flow_colors[flow_id],
+                    edgecolor="black"
+                )
+
+                # flow label inside bar
+                ax.text(
+                    start + (end - start) / 2,
+                    y,
+                    f"{flow_id}",
+                    ha="center",
+                    va="center",
+                    fontsize=8,
+                    color="black"
+                )
+
+            y += 1
+
+        # space between switches
+        y += 0.8
+
+    ax.set_yticks(yticks)
+    ax.set_yticklabels(ylabels, fontsize=9)
+    ax.set_xlabel("Time")
+    ax.set_title("TSN Switch Scheduling Timeline (Per-Port View)")
+
+    ax.grid(True, axis="x", linestyle="--", alpha=0.5)
+
+    # legend
+    legend = [
+        mpatches.Patch(color=c, label=f"{fid}")
+        for fid, c in flow_colors.items()
+    ]
+
+    ax.legend(
+        handles=legend,
+        title="Flows",
+        bbox_to_anchor=(1.02, 1),
+        loc="upper left"
+    )
+
+    plt.tight_layout()
+    plt.show()
+
+# ============================================================
 # MAIN TEST
 # ============================================================
 
 def main():
     print("\n=== Creating environment ===")
-    env = NetEnv()
+    env = NetEnv(network_file="simple_line.json")
     obs, info = env.reset()
 
     print(f"Number of flows: {len(env.flows)}")
@@ -94,7 +178,7 @@ def main():
     print("\n=== Loading trained agent ===")
     model = PPO.load("Preprocess_model_resaved.zip", env=env)
 
-    print("\n=== Running agent (SIMPLE DEBUG) ===")
+    print("\n=== Running agent (DEBUG MODE) ===")
 
     step = 0
     done = False
@@ -109,46 +193,19 @@ def main():
         print(f"\n--- STEP {step} ---")
         print(f"Action: {action}")
 
-        # 1️⃣ TEMP OPERATIONS
-        if env.temp_operations:
-            print(f"Temp ops ({len(env.temp_operations)}):")
-            for link, op in env.temp_operations:
-                u, v = link.link_id
-                print(
-                    f"  TEMP {u}->{v} "
-                    f"[{op.start_time} → {op.end_time}]"
-                )
-        else:
-            print("Temp ops: NONE")
-
-        # 2️⃣ COMMITTED OPERATIONS (RAW, PER LINK)
-        total_committed = sum(len(ops) for ops in env.links_operations.values())
-        print(f"Total committed ops so far: {total_committed}")
-
-        for link, ops in env.links_operations.items():
-            if not ops:
-                continue
-
-            u, v = link.link_id
-            owner_type = env.graph.nodes[u]["node_type"]
-
-            print(f"  LINK {u}->{v} (owner: {owner_type})")
-            for flow, op in ops:
-                print(
-                    f"    Flow {flow.flow_id} "
-                    f"[{op.start_time} → {op.end_time}]"
-                )
-
         if step > 100:
             print("⚠️ Safety break")
             break
 
     # ========================================================
-    # EXPORT + VISUALIZATION TO FILE
+    # EXPORT + VISUALIZATION
     # ========================================================
 
     env.export_switch_timelines_to_json("final_schedule.json")
-    save_switch_timelines_ascii(env, filename="switch_timelines.txt")
+    save_switch_timelines_ascii(env, "switch_timelines.txt")
+
+    print("\n=== Launching GUI ===")
+    plot_switch_timelines_gui("final_schedule.json")
 
     print("\n=== DONE ===")
 
