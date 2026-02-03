@@ -1,0 +1,104 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d10" for="edge" attr.name="link_rate" attr.type="long" />
+  <key id="d9" for="edge" attr.name="propDelay" attr.type="long" />
+  <key id="d8" for="edge" attr.name="destNode" attr.type="string" />
+  <key id="d7" for="edge" attr.name="sourceNode" attr.type="string" />
+  <key id="d6" for="edge" attr.name="destPort" attr.type="string" />
+  <key id="d5" for="edge" attr.name="sourcePort" attr.type="string" />
+  <key id="d4" for="node" attr.name="procDelay" attr.type="long" />
+  <key id="d3" for="node" attr.name="node_type" attr.type="string" />
+  <key id="d2" for="node" attr.name="ports" attr.type="string" />
+  <key id="d1" for="node" attr.name="name" attr.type="string" />
+  <key id="d0" for="node" attr.name="type" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="D">
+      <data key="d0">host</data>
+      <data key="d1">D</data>
+      <data key="d2">{"Port1": {"name": "Port1", "speed": 1000, "queueCount": 4}}</data>
+      <data key="d3">ES</data>
+    </node>
+    <node id="F">
+      <data key="d0">host</data>
+      <data key="d1">F</data>
+      <data key="d2">{"Port1": {"name": "Port1", "speed": 1000, "queueCount": 4}}</data>
+      <data key="d3">ES</data>
+    </node>
+    <node id="A">
+      <data key="d0">switch</data>
+      <data key="d1">A</data>
+      <data key="d4">1000</data>
+      <data key="d2">{"P1": {"name": "P1", "speed": 1000, "queueCount": 4}, "P2": {"name": "P2", "speed": 1000, "queueCount": 4}}</data>
+      <data key="d3">SW</data>
+    </node>
+    <node id="B">
+      <data key="d0">switch</data>
+      <data key="d1">B</data>
+      <data key="d4">1000</data>
+      <data key="d2">{"P1": {"name": "P1", "speed": 1000, "queueCount": 4}, "P2": {"name": "P2", "speed": 1000, "queueCount": 4}}</data>
+      <data key="d3">SW</data>
+    </node>
+    <node id="C">
+      <data key="d0">switch</data>
+      <data key="d1">C</data>
+      <data key="d4">1000</data>
+      <data key="d2">{"P1": {"name": "P1", "speed": 1000, "queueCount": 4}, "P2": {"name": "P2", "speed": 1000, "queueCount": 4}, "P3": {"name": "P3", "speed": 1000, "queueCount": 4}}</data>
+      <data key="d3">SW</data>
+    </node>
+    <node id="E">
+      <data key="d0">switch</data>
+      <data key="d1">E</data>
+      <data key="d4">1000</data>
+      <data key="d2">{"P1": {"name": "P1", "speed": 1000, "queueCount": 4}, "P2": {"name": "P2", "speed": 1000, "queueCount": 4}, "P3": {"name": "P3", "speed": 1000, "queueCount": 4}}</data>
+      <data key="d3">SW</data>
+    </node>
+    <edge source="D" target="C">
+      <data key="d5">Port1</data>
+      <data key="d6">P1</data>
+      <data key="d7">D</data>
+      <data key="d8">C</data>
+      <data key="d9">10</data>
+      <data key="d10">1000</data>
+    </edge>
+    <edge source="B" target="A">
+      <data key="d5">P2</data>
+      <data key="d6">P1</data>
+      <data key="d7">B</data>
+      <data key="d8">A</data>
+      <data key="d9">10</data>
+      <data key="d10">1000</data>
+    </edge>
+    <edge source="C" target="B">
+      <data key="d5">P2</data>
+      <data key="d6">P1</data>
+      <data key="d7">C</data>
+      <data key="d8">B</data>
+      <data key="d9">10</data>
+      <data key="d10">1000</data>
+    </edge>
+    <edge source="C" target="E">
+      <data key="d5">P3</data>
+      <data key="d6">P1</data>
+      <data key="d7">C</data>
+      <data key="d8">E</data>
+      <data key="d9">10</data>
+      <data key="d10">1000</data>
+    </edge>
+    <edge source="E" target="A">
+      <data key="d5">P2</data>
+      <data key="d6">P2</data>
+      <data key="d7">E</data>
+      <data key="d8">A</data>
+      <data key="d9">10</data>
+      <data key="d10">1000</data>
+    </edge>
+    <edge source="E" target="F">
+      <data key="d5">P3</data>
+      <data key="d6">Port1</data>
+      <data key="d7">E</data>
+      <data key="d8">F</data>
+      <data key="d9">10</data>
+      <data key="d10">1000</data>
+    </edge>
+  </graph>
+</graphml>
