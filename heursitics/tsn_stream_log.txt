@@ -1,0 +1,10 @@
+stream-D-to-F transmits at D.Port1 from 0.0 to 4000.0 ns
+stream-D-to-F transmits at C.P1 from 5010.0 to 5010.0 ns
+stream-D-to-F transmits at C.P3 from 6010.0 to 10010.0 ns
+stream-D-to-F transmits at E.P1 from 11020.0 to 11020.0 ns
+stream-D-to-F transmits at E.P3 from 12020.0 to 16020.0 ns
+stream-D-to-A transmits at D.Port1 from 0.0 to 4000.0 ns
+stream-D-to-A transmits at C.P1 from 5010.0 to 5010.0 ns
+stream-D-to-A transmits at C.P2 from 8000.0 to 12000.0 ns
+stream-D-to-A transmits at B.P1 from 13010.0 to 13010.0 ns
+stream-D-to-A transmits at B.P2 from 14010.0 to 18010.0 ns
